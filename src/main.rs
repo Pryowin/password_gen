@@ -68,7 +68,7 @@ fn pwd_gen(params: &Params) -> String {
     // Fill remaining characters
     for i in 0..params.pwd_length as usize {
         if pwd_chars[i] == ' ' {
-            if params.pwd_has_special && i % WORDLENGTH as usize == 0 {
+            if params.pwd_has_special && i % WORDLENGTH as usize == 0 && i != 0 {
                 pwd_chars[i] = '-';
             } else if params.pwd_has_number && rng.gen_range(0..10) > NUMERICTHRESHOLD {
                 pwd_chars[i] = rng.gen_range(b'0'..=b'9') as char;
