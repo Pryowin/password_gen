@@ -12,7 +12,6 @@ const UPPERCASETHRESHOLD: u32 = 6;
 const WORDLENGTH: u32 = 5;
 
 #[derive(Deserialize)]
-
 struct Params {
     pwd_length: u32,
     pwd_has_upper: bool,
@@ -38,35 +37,62 @@ fn pwd_gen(params: &Params) -> String {
         "At least one type of letter must be valid"
     );
 
-    let mut pwd_chars = Vec::new();
+    let mut pwd_chars = vec![' '; params.pwd_length as usize];
 
-    for i in 1..=params.pwd_length {
-        if i % WORDLENGTH == 0 && params.pwd_has_special {
-            pwd_chars.push("-".to_string());
-        } else {
-            if params.pwd_has_number && rand::thread_rng().gen_range(0..10) > NUMERICTHRESHOLD {
-                pwd_chars.push(rand::thread_rng().gen_range(0..10).to_string());
+    let mut rng = rand::thread_rng();
+
+    // Ensure at least one lower case letter
+    if params.pwd_has_lower {
+        let pos = rng.gen_range(0..params.pwd_length) as usize;
+        pwd_chars[pos] = rng.gen_range(b'a'..=b'z') as char;
+    }
+
+    // Ensure at least one upper case letter
+    if params.pwd_has_upper {
+        let mut pos = rng.gen_range(0..params.pwd_length) as usize;
+        while pwd_chars[pos] != ' ' {
+            pos = rng.gen_range(0..params.pwd_length) as usize;
+        }
+        pwd_chars[pos] = rng.gen_range(b'A'..=b'Z') as char;
+    }
+
+    // Ensure at least one number
+    if params.pwd_has_number {
+        let mut pos = rng.gen_range(0..params.pwd_length) as usize;
+        while pwd_chars[pos] != ' ' {
+            pos = rng.gen_range(0..params.pwd_length) as usize;
+        }
+        pwd_chars[pos] = rng.gen_range(b'0'..=b'9') as char;
+    }
+
+    // Fill remaining characters
+    for i in 0..params.pwd_length as usize {
+        if pwd_chars[i] == ' ' {
+            if params.pwd_has_special && i % WORDLENGTH as usize == 0 {
+                pwd_chars[i] = '-';
+            } else if params.pwd_has_number && rng.gen_range(0..10) > NUMERICTHRESHOLD {
+                pwd_chars[i] = rng.gen_range(b'0'..=b'9') as char;
             } else {
-                pwd_chars.push(pick_letter(params.pwd_has_upper, params.pwd_has_lower));
+                pwd_chars[i] = pick_letter(params.pwd_has_upper, params.pwd_has_lower);
             }
         }
     }
 
-    pwd_chars.join("")
+    pwd_chars.iter().collect()
 }
 
-fn pick_letter(pwd_has_upper: bool, pwd_has_lower: bool) -> String {
+fn pick_letter(pwd_has_upper: bool, pwd_has_lower: bool) -> char {
     let letters = ('a'..='z').collect::<Vec<_>>();
     let num = rand::thread_rng().gen_range(0..letters.len());
 
     if !pwd_has_upper {
-        letters[num].to_string()
+        letters[num]
     } else if !pwd_has_lower {
-        letters[num].to_uppercase().to_string()
+        letters[num].to_ascii_uppercase()
     } else if rand::thread_rng().gen_range(0..10) > UPPERCASETHRESHOLD {
-        letters[num].to_string()
+        letters[num]
     } else {
-        letters[num].to_uppercase().to_string()
+        letters[num].to_ascii_uppercase()
     }
 }
 
